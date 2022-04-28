@@ -1,0 +1,7 @@
+rootProject.name = 'Walker'
+
+include 'lok'
+include 'json'
+include 'serialize'
+include 'konsole'
+include 'sql'

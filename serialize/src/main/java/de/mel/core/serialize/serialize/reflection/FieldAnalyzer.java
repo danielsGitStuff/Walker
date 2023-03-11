@@ -2,7 +2,6 @@ package de.mel.core.serialize.serialize.reflection;
 
 import de.mel.core.serialize.JsonIgnore;
 import de.mel.core.serialize.SerializableEntity;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -125,16 +124,18 @@ public class FieldAnalyzer {
         return expected.isAssignableFrom(clazz);
     }
 
-    private static final Set<Class<?>> primitiveClasses = new HashSet();
+    private static final Set<Class<?>> primitiveClasses = new HashSet<>();
 
     static {
         Class<?>[] classes = new Class[]{Byte.class, byte.class, short.class, Short.class, int.class, Integer.class,
                 long.class, Long.class, float.class, Float.class, double.class, Double.class, char.class,
                 Character.class, String.class, boolean.class, Boolean.class
         };
-        for (Class clazz : classes) {
-            primitiveClasses.add(clazz);
-        }
+        Collections.addAll(primitiveClasses, classes);
+    }
+
+    public static Set<Class<?>> getPrimitiveClasses() {
+        return primitiveClasses;
     }
 
     public static boolean isPrimitiveClass(Class<?> type) {
@@ -167,6 +168,10 @@ public class FieldAnalyzer {
     public static Class getBoundedClass(Type type) {
         if (type instanceof Class)
             return (Class) type;
+        if (type instanceof ParameterizedType){
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            return (Class) parameterizedType.getRawType();
+        }
         TypeVariable variable = (TypeVariable) type;
         return (Class) variable.getBounds()[0];
     }

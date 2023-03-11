@@ -89,7 +89,6 @@ public class SerializableEntityDeserializer implements FieldDeserializer {
                 if (FieldAnalyzer.isJsonIgnored(field) || FieldAnalyzer.isTransinient(field))
                     continue;
                 String fieldName = field.getName();
-                //todo debug
                 field.setAccessible(true);
                 Object jsonFieldValue = readFieldFromJson(jsonMap, fieldName);
                 Class fieldClass = field.getType();
@@ -109,7 +108,7 @@ public class SerializableEntityDeserializer implements FieldDeserializer {
             }
             return entity;
         } catch (Exception e) {
-//            e.printStackTrace();
+            e.printStackTrace();
             throw new JsonDeserializationException(e);
         }
     }

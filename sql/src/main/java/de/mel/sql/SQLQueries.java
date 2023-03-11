@@ -1,7 +1,6 @@
 package de.mel.sql;
 
 
-import de.mel.DebugTimer;
 import de.mel.sql.conn.JDBCConnection;
 import de.mel.sql.conn.SQLConnection;
 import de.mel.sql.transform.NumberTransformer;
@@ -9,9 +8,7 @@ import de.mel.sql.transform.SqlResultTransformer;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * builds and executes mysql queries for several purposes.
@@ -19,7 +16,6 @@ import java.util.Map;
  * @author xor
  */
 public class SQLQueries extends ISQLQueries {
-
     @Override
     public void enableWAL() throws SqlQueriesException {
         try {
@@ -36,18 +32,12 @@ public class SQLQueries extends ISQLQueries {
     private final JDBCConnection sqlConnection;
     private Connection connection;
     private final SqlResultTransformer resultTransformer;
-    public DebugTimer debugTimer;
-    private Map<List<String>, PreparedStatement> preparedStatementMap = new HashMap();
-    private InsertCache insertCache;
+
 
     public SQLQueries(JDBCConnection connection, SqlResultTransformer resultTransformer) {
         this.sqlConnection = connection;
         this.resultTransformer = resultTransformer;
         this.connection = sqlConnection.getConnection();
-        this.insertCache = new InsertCache(this.connection);
-        this.debugTimer = new DebugTimer("sqlqueries.debug");
-        this.insertCache.setActive(false);
-
     }
 
     public SQLQueries(JDBCConnection connection, boolean reentrantLockOnWrite, RWLock lock, SqlResultTransformer resultTransformer) {
@@ -448,16 +438,6 @@ public class SQLQueries extends ISQLQueries {
         return insertWithAttributes(sqlTableObject, sqlTableObject.getInsertAttributes());
     }
 
-//    @Override
-//    public Long insertWithAttributes(SQLTableObject sqlTableObject, List<Pair<?>> attributes) throws SqlQueriesException {
-//        lockWrite();
-//        try {
-//            return this.insertCache.insertWithAttributes(sqlTableObject, attributes);
-//        } finally {
-//            unlockWrite();
-//        }
-//    }
-
     @Override
     public Long insertWithAttributes(SQLTableObject sqlTableObject, List<Pair<?>> attributes) throws SqlQueriesException {
         lockWrite();
@@ -532,11 +512,6 @@ public class SQLQueries extends ISQLQueries {
         }
         out("insert().doing nothing right now");
         return null;
-    }
-
-    public void printDebugTimers(){
-        this.debugTimer.print();
-        this.insertCache.debugTimer.print();
     }
 
 

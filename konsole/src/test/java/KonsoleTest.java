@@ -1,5 +1,5 @@
-import de.mel.Lok;
 import de.mel.KResult;
+import de.mel.Lok;
 import de.mel.konsole.Konsole;
 import org.junit.Before;
 import org.junit.Test;
@@ -160,6 +160,17 @@ public class KonsoleTest {
         Date read = new Date(time);
         Lok.debug(date.toString());
         Lok.debug(read.toString());
+    }
+
+    @Test
+    public void positional() throws Konsole.HelpException, Konsole.KonsoleWrongArgumentsException, Konsole.DependenciesViolatedException {
+        arguments = new String[]{"positional1", "positional2"};
+        konsole.positional("p1", "p1.desc", (result, args) -> result.manyArgs.add(args[0]));
+        konsole.positional("p2", "p2.desc", (result, args) -> result.manyArgs.add(args[0]));
+        konsole.handle(arguments);
+        assertEquals(arguments[0], konsole.getResult().manyArgs.get(0));
+        assertEquals(arguments[1], konsole.getResult().manyArgs.get(1));
+        assertEquals(arguments.length, konsole.getResult().manyArgs.size());
     }
 
     public static class Dummy implements KResult {

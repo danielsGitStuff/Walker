@@ -14,13 +14,15 @@ import java.util.*;
  */
 public class Konsole<T extends KResult> {
     private T result;
-    private Map<String, KReader> argsMap = new HashMap<>();
+    private Map<String, KReader<T>> argsMap = new HashMap<>();
     private Map<String, String> descMap = new HashMap<>();
     // set to false if not specified
     private Map<String, Boolean> mandatory = new HashMap<>();
     private int pos = 0;
     private String currentAttr;
     private DependenciesContainer dependenciesContainer = new DependenciesContainer();
+
+    private List<String> positionalArgumentNames = new ArrayList<>();
 
     public Konsole(T result) {
         this.result = result;
@@ -54,10 +56,6 @@ public class Konsole<T extends KResult> {
             splitIndex = rear.indexOf('"');
         }
         return tokens.toArray(new String[0]);
-    }
-
-    public T getResult() {
-        return result;
     }
 
     /**
@@ -102,6 +100,10 @@ public class Konsole<T extends KResult> {
         return tokens;
     }
 
+    public T getResult() {
+        return result;
+    }
+
     /**
      * Make assignments of the parsed values in the {@link KReader}. It is the {@link KReader} of the constructor.
      *
@@ -113,6 +115,12 @@ public class Konsole<T extends KResult> {
     public Konsole<T> optional(String name, String description, KReader<T> definition) {
         argsMap.put(name, definition);
         descMap.put(name, description);
+        return this;
+    }
+
+    public Konsole<T> positional(String name, String description, KReader<T> definition) {
+        mandatory(name, description, definition);
+        positionalArgumentNames.add(name);
         return this;
     }
 
@@ -159,8 +167,19 @@ public class Konsole<T extends KResult> {
         }
         while (pos < args.length) {
             currentAttr = args[pos];
-            KReader reader = argsMap.get(currentAttr);
-            int readerPos = ++pos;
+            KReader<T> reader;
+            boolean isPositional = false;
+            int readerPos = pos;
+            if (pos < positionalArgumentNames.size()) {
+                // positional arguments
+                currentAttr = positionalArgumentNames.get(pos);
+                reader = argsMap.get(currentAttr);
+                isPositional = true;
+            } else {
+                reader = argsMap.get(currentAttr);
+                readerPos++;
+            }
+            pos++;
             String nextAttr = null;
             for (; pos < args.length; pos++) {
                 String arg = args[pos];
@@ -173,6 +192,11 @@ public class Konsole<T extends KResult> {
                     printHelp();
                     throw new KonsoleWrongArgumentsException("unknown attributes: " + arg);
                 }
+                if (isPositional) {
+                    System.out.println("Konsole.handle.positional");
+                    nextAttr = arg;
+                    break;
+                }
             }
             String[] argsForReader = Arrays.copyOfRange(args, readerPos, pos);
             if (reader == null) {
@@ -180,6 +204,7 @@ public class Konsole<T extends KResult> {
                 throw new KonsoleWrongArgumentsException("unknown argument: " + currentAttr);
             }
             try {
+
                 if (mandatory.containsKey(currentAttr))
                     mandatory.put(currentAttr, true);
                 dependenciesContainer.onHandleAttribute(currentAttr);

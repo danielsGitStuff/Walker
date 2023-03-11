@@ -2,8 +2,6 @@ package de.mel.core.serialize.serialize.fieldserializer.entity;
 
 import de.mel.core.serialize.EntityAnalyzer;
 import de.mel.core.serialize.SerializableEntity;
-import de.mel.core.serialize.deserialize.entity.SerializableEntityDeserializer;
-import de.mel.core.serialize.exceptions.JsonDeserializationException;
 import de.mel.core.serialize.exceptions.JsonSerializationException;
 import de.mel.core.serialize.serialize.EntitySerializerMap;
 import de.mel.core.serialize.serialize.fieldserializer.FieldSerializer;
@@ -57,12 +55,6 @@ public class SerializableEntitySerializer extends FieldSerializer {
         refIdCount = 0L;
         this.traceManager = traceManager;
         this.refIdCount = 0L;
-    }
-
-    public static <T extends SerializableEntity> T deepCopy(T original) throws JsonSerializationException, JsonDeserializationException {
-        String json = SerializableEntitySerializer.serialize(original);
-        T copy = (T) SerializableEntityDeserializer.deserialize(json);
-        return copy;
     }
 
     public static String serialize(SerializableEntity entity, int range) throws JsonSerializationException {

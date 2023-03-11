@@ -127,16 +127,11 @@ public class EntityAnalyzer {
     public static SerializableEntity instance(String simpleClassName)
             throws ReflectiveOperationException {
         try {
-            Class<? extends SerializableEntity> clazz = EntityAnalyzer.clazz(simpleClassName);
-            Constructor<? extends SerializableEntity> constructor = clazz.getDeclaredConstructor();
+            Constructor<? extends SerializableEntity> constructor = EntityAnalyzer.clazz(simpleClassName).getDeclaredConstructor();
             SerializableEntity entity = constructor.newInstance();
             return entity;
         } catch (ReflectiveOperationException e) {
             System.err.println("could not create instance with default constructor for class: " + simpleClassName);
-            Class<? extends SerializableEntity> clazz = EntityAnalyzer.clazz(simpleClassName);
-            if (Modifier.isAbstract(clazz.getModifiers())) {
-                System.err.println("class '" + clazz.getSimpleName() + "' is ABSTRACT!");
-            }
             throw e;
         }
     }

@@ -13,6 +13,7 @@ class WalkerFileEntry : SQLTableObject() {
         val HASH = "hash"
         val CREATED = "created"
         val MODIFIED = "modified"
+        val SIZE = "size"
     }
 
     override fun getTableName(): String = "walkfiles"
@@ -24,13 +25,14 @@ class WalkerFileEntry : SQLTableObject() {
     val hash = Pair(String::class.java, HASH)
     val created = Pair(Long::class.java, CREATED)
     val modified = Pair(Long::class.java, MODIFIED)
+    val size = Pair(Long::class.java, SIZE)
 
     init {
         init()
     }
 
     override fun init() {
-        populateInsert(walkId, path, hash, name, extension, created, modified)
+        populateInsert(walkId, path, hash, name, extension, size, created, modified)
         populateAll(id)
     }
 }

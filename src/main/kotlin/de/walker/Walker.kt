@@ -62,7 +62,6 @@ class Walker(val config: Config) {
         this.sql.commit()
         t1.print()
         t2.print()
-        this.sql.printDebugTimers();
     }
 
 }

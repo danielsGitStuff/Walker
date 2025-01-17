@@ -13,7 +13,3 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation project(path: ':json')
 }
-compileJava {
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
-}

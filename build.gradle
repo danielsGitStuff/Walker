@@ -25,9 +25,18 @@ application {
 
 jar {
     archiveFileName.set("walker.jar")
+
     manifest {
         attributes 'Main-Class': 'de.java.Main'
     }
+
+    // This block includes all dependencies in the JAR
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    // Necessary to avoid errors with duplicate files (like LICENSE, META-INF versions)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 dependencies {

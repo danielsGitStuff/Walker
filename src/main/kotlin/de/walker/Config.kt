@@ -7,4 +7,6 @@ class Config : KResult {
     var dbFile = "walker.db"
     var saveHash = false
     var whiteList = false
+    var hdd = false
+    var threadsMax = Runtime.getRuntime().availableProcessors()
 }

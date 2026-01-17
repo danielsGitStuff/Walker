@@ -10,6 +10,10 @@ fun main(args: Array<String>) {
     k.optional("-db", "set db file") { result, args -> result.dbFile = args[0] }
     k.optional("-wl", "enable white list file extension mode") { result, args -> result.whiteList = true }
     k.optional("-hash", "save hashes too") { result, args -> result.saveHash = true }
+    k.optional("-threads", "sets the number of threads used.") { result, args -> result.threadsMax = args[0].toInt() }
+    k.optional("-hdd", "disables multithreading for HDDs.") { result, args ->
+        result.threadsMax = 1
+    }
     k.handle(args)
     println(config.dir1)
     val timer = OTimer("overall").start()

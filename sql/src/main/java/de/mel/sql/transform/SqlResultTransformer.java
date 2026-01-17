@@ -31,9 +31,9 @@ public abstract class SqlResultTransformer {
                 }
                 if (!resultClass.equals(value.getClass())) {
                     System.out.println("SqlResultTransformer.convert.error");
-//                    NumberTransformer nt = NumberTransformer.forType((Class<? extends Number>) resultClass);
-//                    T casted = (T) nt.cast((Number) value);
-//                    return casted;
+                    NumberTransformer nt = NumberTransformer.forType((Class<? extends Number>) resultClass);
+                    T casted = (T) nt.cast((Number) value);
+                    return casted;
                 }
                 return (T) value;
             }

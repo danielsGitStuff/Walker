@@ -16,6 +16,7 @@ class WalkDao(sql: ISQLQueries) : Dao(sql) {
     walkid integer not null,
     path text,
     name text not null,
+    size integer,
     ext text not null,
     hash text,
     modified int not null,

@@ -92,6 +92,8 @@ class Walker(val config: Config) {
                         updateChannel.send(entry)
                     } catch (e: Exception) {
                         println("Hash error: $e")
+                        println("name: ${entry.path.v()}/${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: ""))
+                        println("ext null? ${entry.extension.isNull}")
                     }
                 }
             }

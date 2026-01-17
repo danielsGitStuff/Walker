@@ -13,6 +13,10 @@ class FileEntryExceptionEntry : SQLTableObject() {
         val STACKTRACE = "stacktrace"
     }
 
+    init {
+        init()
+    }
+
     override fun getTableName() = "file_exceptions"
 
     val id = Pair(Long.Companion::class.java, ID)

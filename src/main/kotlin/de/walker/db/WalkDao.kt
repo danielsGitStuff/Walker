@@ -2,6 +2,8 @@ package de.walker.db
 
 import de.mel.sql.Dao
 import de.mel.sql.ASQLQueries
+import de.mel.sql.ISQLResource
+import de.mel.sql.Pair
 
 class WalkDao(sql: ASQLQueries) : Dao(sql) {
     companion object {
@@ -17,7 +19,7 @@ class WalkDao(sql: ASQLQueries) : Dao(sql) {
     path text,
     name text not null,
     size integer,
-    ext text not null,
+    ext text,
     hash text,
     modified int not null,
     created int not null,
@@ -39,5 +41,16 @@ class WalkDao(sql: ASQLQueries) : Dao(sql) {
         return entry
     }
 
+    fun getEntries(walkId: Long): ISQLResource<WalkerFileEntry> {
+        return sqlQueries.loadResource(
+            WalkerFileEntry().allAttributes,
+            WalkerFileEntry::class.java,
+            "${WalkerFileEntry.WALKID} = ?",
+            ASQLQueries.args(walkId)
+        )
+    }
 
+    fun update(entry: WalkerFileEntry) {
+        sqlQueries.update(entry, "${WalkerFileEntry.ID} = ?", ASQLQueries.args(entry.id.v()))
+    }
 }

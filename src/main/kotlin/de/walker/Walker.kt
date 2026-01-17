@@ -9,7 +9,6 @@ import de.walker.db.WalkerFileEntry
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.io.path.fileSize
 import de.mel.sql.SqliteQueriesCreator
 import de.walker.db.DbBatchWriter
 import kotlinx.coroutines.Dispatchers
@@ -20,8 +19,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class Walker(val config: Config) {
-
-
 
 
     fun start() = runBlocking {
@@ -41,29 +38,30 @@ class Walker(val config: Config) {
             dao.insertWalk(walk)
             val walkId = walk.id.v()
 
-            val t1 = OTimer("relativeTo")
-            val t2 = OTimer("insert")
+            val tInit = OTimer("initialize")
+            val tHash = if (config.saveHash) OTimer("hash") else null
 
             sql.beginTransaction()
             indexMetadata(rootDir, walkId, dao, sql)
 
             sql.commit()
-            if (config.saveHash){
+            if (config.saveHash) {
                 sql.beginTransaction()
                 calculateHashes(walkId, dao, sql)
             }
 
             sql.commit()
-            t1.print()
-            t2.print()
+            tInit.print()
+            tHash?.print()
         }
     }
 
     private suspend fun calculateHashes(walkId: Long, dao: WalkDao, sql: SQLQueries) = coroutineScope {
-        val entriesToProcess = dao.getEntries(walkId)
+        val entriesToProcess = dao.getEntriesResource(walkId)
+        val entriesCount = dao.countEntries(walkId)
 
         val updateChannel = Channel<WalkerFileEntry>(capacity = 100) // ID -> Hash
-        val inputChannel = Channel<WalkerFileEntry>(capacity = 100)
+        val inputChannel = Channel<kotlin.Pair<WalkerFileEntry, Long>>(capacity = 100)
 
         // Updates DB
         val writerJob = launch(Dispatchers.IO) {
@@ -75,7 +73,7 @@ class Walker(val config: Config) {
         // 2. The Heavy Workers
         val workers = List(Runtime.getRuntime().availableProcessors()) {
             launch(Dispatchers.IO) {
-                for (entry in inputChannel) {
+                for ((entry, counter) in inputChannel) {
                     try {
                         val name = "${entry.path.v()}/${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: "")
                         val fullPath = File(config.dir1, name)
@@ -83,6 +81,9 @@ class Walker(val config: Config) {
                         // HEAVY IO
                         val hash = fullPath.inputStream().use { Hash.md5(it) }
                         entry.hash.v(hash)
+                        if (counter % 10000L == 0L) {
+                            println("${counter}/${entriesCount} hashed.")
+                        }
 
                         updateChannel.send(entry)
                     } catch (e: Exception) {
@@ -92,17 +93,16 @@ class Walker(val config: Config) {
             }
         }
 
-
-        launch(Dispatchers.Default) {
-            entriesToProcess.use { entries->
-                var next = entries.next
-                while (next != null) {
-                    inputChannel.send(next)
-                    next = entries.next()
-                }
+        entriesToProcess.use { entries ->
+            var counter = 1L
+            var walkerFileEntry = entries.next
+            while (walkerFileEntry != null) {
+                inputChannel.send(kotlin.Pair(walkerFileEntry, counter))
+                walkerFileEntry = entries.next()
+                counter++
             }
-            inputChannel.close()
         }
+        inputChannel.close()
 
         // Cleanup
         workers.joinAll()

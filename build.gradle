@@ -24,20 +24,36 @@ application {
 }
 
 jar {
+    manifest {
+        attributes 'Main-Class': 'de.java.Main'
+    }
+}
+
+tasks.register('fatJar', Jar) {
+    group = 'build'
+    description = 'Assembles a runnable fat jar with all dependencies.'
+
     archiveFileName.set("walker.jar")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
         attributes 'Main-Class': 'de.java.Main'
     }
 
-    // This block includes all dependencies in the JAR
+    // Include compiled code from this project
+    from sourceSets.main.output
+
+    // Explicitly depend on runtimeClasspath to fix the execution order error
+    dependsOn configurations.runtimeClasspath
+
+    // Include all dependencies
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-
-    // Necessary to avoid errors with duplicate files (like LICENSE, META-INF versions)
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+// 3. Ensure 'gradle build' runs our fatJar task
+build.dependsOn fatJar
 
 dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib'

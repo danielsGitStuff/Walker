@@ -18,7 +18,7 @@ class Walker(val config: Config) {
     val dao = WalkDao(sql)
     fun start() {
         sql.execute("PRAGMA foreign_keys = ON")
-//        sql.enableWAL()
+        sql.enableWAL()
         val ex = SqliteExecutor(connection)
         if (listOf("walk", "walkfiles").any { !ex.checkTableExists(it) }) {
             val ins = WalkDao.createSql().byteInputStream()
@@ -31,13 +31,13 @@ class Walker(val config: Config) {
         dao.insertWalk(walk)
         val walkId = walk.id.v()
 
-        val whiteList = setOf("jpg", "jpeg", "png", "bmp", "gif", "dng", "raw", "mp4", "psd")
+        val whiteList = setOf("jpg", "jpeg", "png", "bmp", "gif", "dng", "raw", "mp4", "psd", "webp")
         val t1 = OTimer("relativeTo")
         val t2 = OTimer("insert")
 
         this.sql.beginTransaction()
         rootDir.walkTopDown().filter { it.isFile }.forEach { file ->
-            if (!config.whiteList || file.extension.lowercase() in whiteList) {
+            if ((!config.whiteList || file.extension.lowercase() in whiteList) && !Files.isSymbolicLink(file.toPath())) {
                 val f = file.relativeTo(rootDir)
                 try {
                     val entry = WalkerFileEntry()

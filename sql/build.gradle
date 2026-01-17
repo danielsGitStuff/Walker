@@ -9,12 +9,11 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinV"
     api project(path: ':serialize')
     testImplementation project(path: ':serialize')
-    testImplementation 'junit:junit:4.12'
-    api group: 'org.xerial', name: 'sqlite-jdbc', version: '3.28.0'
+    testImplementation 'junit:junit:4.13.1'
+    api group: 'org.xerial', name: 'sqlite-jdbc', version: '3.41.2.2'
 
-    testImplementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.28.0'
+    testImplementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.41.2.2'
 }
 repositories {
     mavenCentral()
-    jcenter()
 }

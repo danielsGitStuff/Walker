@@ -10,6 +10,6 @@ configurations{
 }
 dependencies {
     api project(path: ':json')
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.1'
     testImplementation project(path: ':json')
 }

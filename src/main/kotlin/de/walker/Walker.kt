@@ -2,6 +2,7 @@ package de.walker
 
 import de.mel.core.serialize.serialize.tools.OTimer
 import de.mel.execute.SqliteExecutor
+import de.mel.sql.ASQLQueries
 import de.mel.sql.Hash
 import de.mel.sql.SQLQueries
 import de.mel.sql.SqliteQueriesCreator
@@ -22,7 +23,6 @@ import java.nio.file.attribute.BasicFileAttributes
 class Walker(val config: Config) {
 
 
-
     fun start() = runBlocking {
         SqliteQueriesCreator.createSqliteQueries(File(config.dbFile)).use { sql ->
             val dao = WalkDao(sql)
@@ -37,7 +37,7 @@ class Walker(val config: Config) {
             val walkId = walk.id.v()
 
             val tInit = OTimer("initialize").start()
-            val tHash = if (config.saveHash) OTimer("hash")else null
+            val tHash = if (config.saveHash) OTimer("hash") else null
 
             sql.beginTransaction()
             indexMetadata(rootDir, walkId, dao, sql)
@@ -71,12 +71,19 @@ class Walker(val config: Config) {
         }
 
         // 2. The Heavy Workers
+        val walkPath = sql.queryValue(
+            "select ${Walk.DIR} from ${Walk().tableName} where ${Walk.ID} = ?",
+            String::class.java,
+            ASQLQueries.args(walkId)
+        )
+        val rootDir: File = File(walkPath)
         val workers = List(Runtime.getRuntime().availableProcessors()) {
             launch(Dispatchers.IO) {
                 for ((entry, counter) in inputChannel) {
                     try {
-                        val name = "${entry.path.v()}/${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: "")
-                        val fullPath = File(config.dir1, name)
+                        val dir = if (entry.path.isNull) rootDir else File(rootDir, entry.path.v())
+                        val name = "${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: "")
+                        val fullPath = File(dir, name)
 
                         // HEAVY IO
                         val hash = fullPath.inputStream().use { Hash.md5(it) }
@@ -128,16 +135,16 @@ class Walker(val config: Config) {
         val fileChannel = Channel
 
         val workers = List(config.threadsMax) {
-            launch (Dispatchers.IO){
+            launch(Dispatchers.IO) {
 
             }
         }
 
-        launch (Dispatchers.IO) {
+        launch(Dispatchers.IO) {
             rootDir.walkTopDown()
                 .filter { it.isFile }
                 .asFlow()
-                .flatMapMerge (concurrency = config.threadsMax) { file ->
+                .flatMapMerge(concurrency = config.threadsMax) { file ->
                     flow {
                         try {
                             val f = file.relativeTo(rootDir)
@@ -158,6 +165,7 @@ class Walker(val config: Config) {
                             emit(entry)
                         } catch (e: Exception) {
                             println("Meta error: ${file.path}")
+                            println(e)
                         }
                     }.flowOn(Dispatchers.IO)
                 }.collect { entryChannel.send(it) }

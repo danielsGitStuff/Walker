@@ -27,13 +27,9 @@ class Walker(val config: Config) {
         SqliteQueriesCreator.createSqliteQueries(File(config.dbFile)).use { sql ->
             val dao = WalkDao(sql)
             sql.execute("PRAGMA foreign_keys = ON")
+            SqliteExecutor(sql.sqlConnection).executeStream(this::class.java.getResourceAsStream("/de/walker/init.sql"))
             sql.enableWAL()
-            val ex = SqliteExecutor(sql.sqlConnection)
-            if (listOf("walk", "walkfiles").any { !ex.checkTableExists(it) }) {
-                val ins = WalkDao.createSql().byteInputStream()
-                ex.executeStream(ins)
-                println("db initialised")
-            }
+
             val rootDir = File(config.dir1)
             val walk = Walk()
             walk.dir.v(rootDir.absolutePath)
@@ -92,6 +88,7 @@ class Walker(val config: Config) {
                         updateChannel.send(entry)
                     } catch (e: Exception) {
                         println("Hash error: $e")
+                        dao.logHashException(entry, e)
                         println("name: ${entry.path.v()}/${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: ""))
                         println("ext null? ${entry.extension.isNull}")
                     }

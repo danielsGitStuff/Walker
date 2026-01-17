@@ -1,32 +1,11 @@
 package de.walker.db
 
-import de.mel.sql.Dao
 import de.mel.sql.ASQLQueries
+import de.mel.sql.Dao
 import de.mel.sql.ISQLResource
 
 class WalkDao(sql: ASQLQueries) : Dao(sql) {
-    companion object {
-        fun createSql(): String = """
-    create table if not exists walk(
-    id integer primary key autoincrement,
-    dir text not null
-    );
 
-    create table if not exists walkfiles(
-    id integer primary key autoincrement,
-    walkid integer not null,
-    path text,
-    name text not null,
-    size integer,
-    ext text,
-    hash text,
-    modified int not null,
-    created int not null,
-    foreign key (walkid) references walk (id)
-    );
-
-    create index ientry on walkfiles(hash, walkid, ext);"""
-    }
 
     fun insertWalk(walk: Walk): Walk {
         val id = sqlQueries.insert(walk)
@@ -56,5 +35,15 @@ class WalkDao(sql: ASQLQueries) : Dao(sql) {
     fun countEntries(walkId: Long): Long {
         val query = "select count(1) from ${WalkerFileEntry().tableName} where ${WalkerFileEntry.WALKID}=?"
         return sqlQueries.queryValue(query, Long::class.java, ASQLQueries.args(walkId))!!
+    }
+
+    fun logHashException(entry: WalkerFileEntry, e: Exception) {
+        val exceptionEntry = FileEntryExceptionEntry()
+        exceptionEntry.idFileEntry.v(entry.id)
+        exceptionEntry.clazz.v(e.javaClass.simpleName)
+        exceptionEntry.message.v(e.message)
+        val stackTrace = e.stackTrace.take(7)
+            .joinToString { "${it.moduleName} - ${it.fileName} - ${it.methodName} - ${it.lineNumber}" }
+        exceptionEntry.stacktrace.v(stackTrace)
     }
 }

@@ -8,6 +8,7 @@ create table if not exists walkfiles(
     walkid integer not null,
     path text,
     name text not null,
+    size integer,
     ext text not null,
     hash text not null,
     foreign key (walkid) references walk (id)

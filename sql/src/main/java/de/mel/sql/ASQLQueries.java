@@ -11,7 +11,7 @@ import de.mel.sql.conn.SQLConnection;
 /**
  * Created by xor on 2/6/17.
  */
-public abstract class ISQLQueries {
+public abstract class ASQLQueries {
     public static final boolean SYSOUT = false;
     protected RWLock lock;
     protected ReentrantLock reentrantWriteLock;

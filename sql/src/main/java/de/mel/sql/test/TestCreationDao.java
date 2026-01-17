@@ -25,7 +25,7 @@ public abstract class TestCreationDao<T extends SQLTableObject> extends Dao {
         this.dbFile = dbFile;
     }
 
-    public TestCreationDao(ISQLQueries ssqlQueries) {
+    public TestCreationDao(ASQLQueries ssqlQueries) {
         super(ssqlQueries);
     }
 

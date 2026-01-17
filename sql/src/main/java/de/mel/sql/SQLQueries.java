@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author xor
  */
-public class SQLQueries extends ISQLQueries {
+public class SQLQueries extends ASQLQueries implements AutoCloseable {
     @Override
     public void enableWAL() throws SqlQueriesException {
         try {
@@ -127,7 +127,7 @@ public class SQLQueries extends ISQLQueries {
     @Override
     public <T extends SQLTableObject> ISQLResource<T> loadResource(List<Pair<?>> columns, Class<T> clazz, String where,
                                                                    List<Object> whereArgs) throws SqlQueriesException {
-        String selectString = ISQLQueries.buildQueryFrom(columns, clazz, where);
+        String selectString = ASQLQueries.buildQueryFrom(columns, clazz, where);
         if (connection == null) {
             return null;
         }

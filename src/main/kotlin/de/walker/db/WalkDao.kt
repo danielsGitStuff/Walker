@@ -1,9 +1,9 @@
 package de.walker.db
 
 import de.mel.sql.Dao
-import de.mel.sql.ISQLQueries
+import de.mel.sql.ASQLQueries
 
-class WalkDao(sql: ISQLQueries) : Dao(sql) {
+class WalkDao(sql: ASQLQueries) : Dao(sql) {
     companion object {
         fun createSql(): String = """
     create table if not exists walk(

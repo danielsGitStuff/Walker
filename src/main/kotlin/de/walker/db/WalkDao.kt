@@ -43,7 +43,13 @@ class WalkDao(sql: ASQLQueries) : Dao(sql) {
         exceptionEntry.clazz.v(e.javaClass.simpleName)
         exceptionEntry.message.v(e.message)
         val stackTrace = e.stackTrace.take(7)
-            .joinToString { "${it.moduleName} - ${it.fileName} - ${it.methodName} - ${it.lineNumber}" }
+            .joinToString { "${it.moduleName} - ${it.fileName} - ${it.methodName} - ${it.lineNumber}\n" }
         exceptionEntry.stacktrace.v(stackTrace)
+        sqlQueries.insert(exceptionEntry)
+        listOf(
+            exceptionEntry.clazz,
+            exceptionEntry.message,
+            exceptionEntry.stacktrace
+        ).forEach { println("${it.k()}: ${it.v()}") }
     }
 }

@@ -89,8 +89,8 @@ class Walker(val config: Config) {
                     } catch (e: Exception) {
                         println("Hash error: $e")
                         dao.logHashException(entry, e)
-                        println("name: ${entry.path.v()}/${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: ""))
-                        println("ext null? ${entry.extension.isNull}")
+//                        println("name: ${entry.path.v()}/${entry.name.v()}" + (entry.extension.v()?.let { ".$it" } ?: ""))
+//                        println("ext null? ${entry.extension.isNull}")
                     }
                 }
             }

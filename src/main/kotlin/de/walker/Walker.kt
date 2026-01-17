@@ -10,7 +10,9 @@ import de.walker.db.WalkDao
 import de.walker.db.WalkerFileEntry
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.fileSize
 
 class Walker(val config: Config) {
     var connection = SQLConnector.createSqliteConnection(File(config.dbFile))
@@ -46,6 +48,7 @@ class Walker(val config: Config) {
                     entry.path.v(f.parentFile?.path)
                     entry.extension.v(f.extension)
                     entry.name.v(f.nameWithoutExtension.lowercase())
+                    entry.size.v(f.toPath().fileSize())
                     entry.modified.v(file.lastModified() / 1000)
                     val o = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
                     entry.created.v(o.creationTime().toMillis() / 1000)

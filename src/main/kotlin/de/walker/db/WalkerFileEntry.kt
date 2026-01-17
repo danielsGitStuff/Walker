@@ -10,6 +10,7 @@ class WalkerFileEntry : SQLTableObject() {
         val PATH = "path"
         val NAME = "name"
         val EXTENTION = "ext"
+        val SIZE = "size"
         val HASH = "hash"
         val CREATED = "created"
         val MODIFIED = "modified"
@@ -20,6 +21,7 @@ class WalkerFileEntry : SQLTableObject() {
     val walkId = Pair(Long::class.java, WALKID)
     val path = Pair(String::class.java, PATH)
     val name = Pair(String::class.java, NAME)
+    val size = Pair(Long::class.java, SIZE)
     val extension = Pair(String::class.java, EXTENTION)
     val hash = Pair(String::class.java, HASH)
     val created = Pair(Long::class.java, CREATED)
@@ -30,7 +32,7 @@ class WalkerFileEntry : SQLTableObject() {
     }
 
     override fun init() {
-        populateInsert(walkId, path, hash, name, extension, created, modified)
+        populateInsert(walkId, path, hash, name, size, extension, created, modified)
         populateAll(id)
     }
 }

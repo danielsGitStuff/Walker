@@ -105,23 +105,23 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
     }
 
 
-    private void insertArguments(PreparedStatement pstmt, List<Object> whereArgs, int count) throws SQLException {
+    private void insertArguments(PreparedStatement preparedStatement, List<Object> whereArgs, int count) throws SQLException {
         for (Object o : whereArgs) {
-            pstmt.setObject(count, o);
+            preparedStatement.setObject(count, o);
             count++;
         }
     }
 
 
-    private void insertArguments(PreparedStatement pstmt, Object[] whereArgs, int count) throws SQLException {
+    private void insertArguments(PreparedStatement preparedStatement, Object[] whereArgs, int count) throws SQLException {
         for (Object o : whereArgs) {
-            pstmt.setObject(count, o);
+            preparedStatement.setObject(count, o);
             count++;
         }
     }
 
-    private void insertArguments(PreparedStatement pstmt, List<Object> whereArgs) throws SQLException {
-        insertArguments(pstmt, whereArgs, 1);
+    private void insertArguments(PreparedStatement preparedStatement, List<Object> whereArgs) throws SQLException {
+        insertArguments(preparedStatement, whereArgs, 1);
     }
 
     @Override
@@ -132,12 +132,12 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
             return null;
         }
         try {
-            PreparedStatement pstmt = connection.prepareStatement(selectString);
+            PreparedStatement preparedStatement = connection.prepareStatement(selectString);
             if (where != null && whereArgs != null) {
-                insertArguments(pstmt, whereArgs);
+                insertArguments(preparedStatement, whereArgs);
             }
-            pstmt.execute();
-            return new SQLResource<>(pstmt, clazz, columns);
+            preparedStatement.execute();
+            return new SQLResource<>(preparedStatement, clazz, columns);
         } catch (Exception e) {
             throw new SqlQueriesException(e);
         }
@@ -172,12 +172,12 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
             return null;
         }
         try {
-            PreparedStatement pstmt = connection.prepareStatement(selectString);
+            PreparedStatement preparedStatement = connection.prepareStatement(selectString);
             if (arguments != null) {
-                insertArguments(pstmt, arguments);
+                insertArguments(preparedStatement, arguments);
             }
-            pstmt.execute();
-            ResultSet resultSet = pstmt.getResultSet();
+            preparedStatement.execute();
+            ResultSet resultSet = preparedStatement.getResultSet();
             boolean hasResult = resultSet.next();
             if (hasResult && resultSet.getRow() > 0) {
                 while (!resultSet.isAfterLast()) {
@@ -198,7 +198,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
                 }
             }
             resultSet.close();
-            pstmt.close();
+            preparedStatement.close();
             return result;
         } catch (Exception e) {
             System.err.println("SQLQueries.loadColumn.failed.query: " + selectString);
@@ -213,19 +213,19 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
             return null;
         }
         try {
-            PreparedStatement pstmt = connection.prepareStatement(query);
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
             if (whereArgs != null) {
-                insertArguments(pstmt, whereArgs);
+                insertArguments(preparedStatement, whereArgs);
             }
-            pstmt.execute();
-            ResultSet resultSet = pstmt.getResultSet();
+            preparedStatement.execute();
+            ResultSet resultSet = preparedStatement.getResultSet();
             boolean hasResult = resultSet.next();
             if (hasResult && resultSet.getRow() > 0) {
                 while (!resultSet.isAfterLast()) {
                     try {
                         Object res = resultSet.getObject(1);
                         // cast numbers because that does not happen automagically
-                        if (Number.class.isAssignableFrom(clazz) && res instanceof Number) {
+                        if (Number.class.isAssignableFrom(clazz) && res instanceof Number) { //NOSONAR
                             Number casted = NumberTransformer.forType((Class<? extends Number>) clazz).cast((Number) res);
                             list.add((T) casted);
                         } else
@@ -239,7 +239,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
                 }
             }
             resultSet.close();
-            pstmt.close();
+            preparedStatement.close();
         } catch (Exception e) {
             System.err.println("SQLQueries.loadColumn.failed.query: " + query);
             throw new SqlQueriesException(e);
@@ -264,12 +264,12 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
             return null;
         }
         try {
-            PreparedStatement pstmt = connection.prepareStatement(selectString);
+            PreparedStatement preparedStatement = connection.prepareStatement(selectString);
             if (arguments != null) {
-                insertArguments(pstmt, arguments);
+                insertArguments(preparedStatement, arguments);
             }
-            pstmt.execute();
-            ResultSet resultSet = pstmt.getResultSet();
+            preparedStatement.execute();
+            ResultSet resultSet = preparedStatement.getResultSet();
             boolean hasResult = resultSet.next();
             if (hasResult && resultSet.getRow() > 0) {
                 while (!resultSet.isAfterLast()) {
@@ -291,7 +291,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
                 }
             }
             resultSet.close();
-            pstmt.close();
+            preparedStatement.close();
             return result;
         } catch (Exception e) {
             System.err.println("SqlQieries.load.failed for table     '" + sqlTableObject.getTableName() + "'");
@@ -312,16 +312,16 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
         out("loadString()");
         out(selectString);
         try {
-            PreparedStatement pstmt = connection.prepareStatement(selectString);
+            PreparedStatement preparedStatement = connection.prepareStatement(selectString);
             if (arguments != null) {
                 int count = 1;
                 for (Object object : arguments) {
-                    pstmt.setObject(count, object);
+                    preparedStatement.setObject(count, object);
                     count++;
                 }
             }
-            pstmt.execute();
-            ResultSet resultSet = pstmt.getResultSet();
+            preparedStatement.execute();
+            ResultSet resultSet = preparedStatement.getResultSet();
             while (resultSet.next() && !resultSet.isAfterLast()) {
                 T sqlObjInstance = (T) sqlTableObject.getClass().newInstance();
                 List<Pair<?>> attributes = sqlObjInstance.getAllAttributes();
@@ -332,7 +332,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
                 result.add(sqlObjInstance);
             }
             resultSet.close();
-            pstmt.close();
+            preparedStatement.close();
             return result;
         } catch (Exception e) {
             throw new SqlQueriesException(e);
@@ -356,26 +356,26 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
         lockRead();
         Object result = null;
         try {
-            PreparedStatement pstmt = connection.prepareStatement(query);
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
             if (args != null) {
                 int count = 1;
                 for (Object arg : args) {
-                    pstmt.setObject(count, arg);
+                    preparedStatement.setObject(count, arg);
                     count++;
                 }
             }
-            result = pstmt.execute();
+            result = preparedStatement.execute();
             if ((boolean) result) {
-                ResultSet resultSet = pstmt.getResultSet();
+                ResultSet resultSet = preparedStatement.getResultSet();
                 resultSet.next();
                 if (resultSet.getRow() > 0) {
                     //String columnName = resultSet.getMetaData().getColumnLabel(1);
                     result = resultSet.getObject(1);
                     resultSet.close();
-                    pstmt.close();
+                    preparedStatement.close();
                 }
             } else {
-                pstmt.close();
+                preparedStatement.close();
                 return null;
             }
         } catch (Exception e) {
@@ -406,12 +406,12 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
                     attrs += (o == null ? "null" : o.toString()) + ", ";
                 }
             out("execute.attr: " + attrs);
-            PreparedStatement pstmt = connection.prepareStatement(statement);
+            PreparedStatement preparedStatement = connection.prepareStatement(statement);
             if (whereArgs != null && whereArgs != null) {
-                insertArguments(pstmt, whereArgs, 1);
+                insertArguments(preparedStatement, whereArgs, 1);
             }
-            pstmt.execute();
-            pstmt.close();
+            preparedStatement.execute();
+            preparedStatement.close();
         } catch (Exception e) {
             System.err.println("SQLQueries.execute.stmt: " + statement);
             System.err.println("SQLQueries.execute.args : " + whereArgsToString(whereArgs));
@@ -473,20 +473,20 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
         }
         try {
 
-            PreparedStatement pstmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             for (int i = 1; i <= attributes.size(); i++) {
                 Pair<?> attribute = attributes.get(i - 1);
-                pstmt.setObject(i, attribute.v());
+                preparedStatement.setObject(i, attribute.v());
             }
             if (reentrantWriteLock != null)
                 reentrantWriteLock.lock();
-            pstmt.executeUpdate();
-            ResultSet resultSet = pstmt.getGeneratedKeys();
+            preparedStatement.executeUpdate();
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
             next = resultSet.next();
             if (resultSet.getRow() > 0) {
                 Object id = resultSet.getObject(1);
                 resultSet.close();
-                pstmt.close();
+                preparedStatement.close();
                 if (reentrantWriteLock != null)
                     reentrantWriteLock.unlock();
                 if (id instanceof Integer)
@@ -598,12 +598,12 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
             return null;
         }
         try {
-            PreparedStatement pstmt = connection.prepareStatement(query);
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
             if (args != null) {
-                insertArguments(pstmt, args);
+                insertArguments(preparedStatement, args);
             }
-            pstmt.execute();
-            return new SQLResource<T>(pstmt, clazz, columns);
+            preparedStatement.execute();
+            return new SQLResource<T>(preparedStatement, clazz, columns);
         } catch (Exception e) {
             throw new SqlQueriesException(e);
         }

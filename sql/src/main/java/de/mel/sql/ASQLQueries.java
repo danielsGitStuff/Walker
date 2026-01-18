@@ -2,6 +2,7 @@ package de.mel.sql;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,33 +46,22 @@ public abstract class ASQLQueries {
     public static List<Object> args(Object... values) {
         List<Object> args = new ArrayList<>();
         if (values != null)
-            for (Object v : values) {
-                args.add(v);
-            }
+            Collections.addAll(args, values);
         return args;
     }
 
-    public static List<Pair<?>> columns(Pair... pairs) {
-        List<Pair<?>> cols = new ArrayList<>();
-        if (pairs != null) {
-            for (Pair pair : pairs)
-                cols.add(pair);
-        }
-        return cols;
-    }
-
     public static String buildSelectQuery(List<Pair<?>> what, String fromTable) {
-        String result = "select ";
+        StringBuilder result = new StringBuilder("select ");
         for (int i = 0; i < what.size(); i++) {
             String entry = what.get(i).k();
             if (i < what.size() - 1) {
-                result += entry + ", ";
+                result.append(entry).append(", ");
             } else {
-                result += entry + " ";
+                result.append(entry).append(" ");
             }
         }
-        result += " from " + fromTable;
-        return result;
+        result.append(" from ").append(fromTable);
+        return result.toString();
     }
 
     protected void out(String msg) {
@@ -128,9 +118,23 @@ public abstract class ASQLQueries {
 
     public abstract <T extends SQLTableObject> List<T> load(List<Pair<?>> columns, T sqlTableObject, String where, List<Object> arguments, String whatElse) throws SqlQueriesException;
 
+    public <T extends SQLTableObject> List<T> load(T sqlTableObject, String where, List<Object> arguments, String whatElse) throws SqlQueriesException {
+        return load(sqlTableObject.getAllAttributes(), sqlTableObject, where, arguments, whatElse);
+    }
+
+    public <T extends SQLTableObject> List<T> load(T sqlTableObject, String where, List<Object> arguments) throws SqlQueriesException {
+        return load(sqlTableObject, where, arguments, null);
+    }
+
+    public <T extends SQLTableObject> List<T> load(T sqlTableObject) throws SqlQueriesException {
+        return load(sqlTableObject, null, null);
+    }
+
+
     /**
      * returns the first row only.
      * ADDS " LIMIT 1" TO THE QUERY!
+     *
      * @param columns
      * @param sqlTableObject
      * @param where
@@ -141,8 +145,6 @@ public abstract class ASQLQueries {
      * @throws SqlQueriesException
      */
     public abstract <T extends SQLTableObject> T loadFirstRow(List<Pair<?>> columns, T sqlTableObject, String where, List<Object> whereArgs, Class<T> castClass) throws SqlQueriesException;
-
-//    public abstract <T extends SQLTableObject> List<T> load(List<Pair<?>> columns, SQLTableObject sqlTableObject, String where, List<Object> whereArgs, String whatElse, Class<T> castClass) throws SqlQueriesException;
 
     public abstract <T> List<T> loadColumn(Pair<T> column, Class<T> clazz, SQLTableObject sqlTableObject, String tableReference, String where, List<Object> whereArgs, String whatElse) throws SqlQueriesException;
 

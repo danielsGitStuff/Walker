@@ -435,34 +435,35 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
 
     @Override
     public Long insert(SQLTableObject sqlTableObject) throws SqlQueriesException {
-        return insertWithAttributes(sqlTableObject, sqlTableObject.getInsertAttributes());
+        Long id = insertWithAttributes(sqlTableObject, sqlTableObject.getInsertAttributes());
+        sqlTableObject.onInsert(id);
+        return id;
     }
 
     @Override
     public Long insertWithAttributes(SQLTableObject sqlTableObject, List<Pair<?>> attributes) throws SqlQueriesException {
         lockWrite();
-        Boolean next;
         out("insert()");
-        String query = null;
+        StringBuilder query = null;
         String fromTable = sqlTableObject.getTableName();
         if (attributes == null) {
             System.err.println("SQLQueries.insertWithAttributes: attributes are null.");
             System.err.println("SQLQueries.insertWithAttributes: have you called init() in the constructor of " + sqlTableObject.getClass().getSimpleName() + "?");
         }
         try {
-            query = " insert into " + fromTable + " (";
+            query = new StringBuilder(" insert into " + fromTable + " (");
             String toConcat = ") values (";
             for (int i = 0; i < attributes.size(); i++) {
                 String key = attributes.get(i).k();
                 if (i < attributes.size() - 1) {
-                    query += key + ", ";
+                    query.append(key).append(", ");
                     toConcat += " ? , ";
                 } else {
-                    query += key;
+                    query.append(key);
                     toConcat += " ? ";
                 }
             }
-            query += toConcat + ")";
+            query.append(toConcat).append(")");
 //            out("insert.query: " + query);
 //            out("insert.attributes: ");
 //            for (Pair pair : attributes) {
@@ -473,7 +474,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
         }
         try {
 
-            PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement preparedStatement = connection.prepareStatement(query.toString(), Statement.RETURN_GENERATED_KEYS);
             for (int i = 1; i <= attributes.size(); i++) {
                 Pair<?> attribute = attributes.get(i - 1);
                 preparedStatement.setObject(i, attribute.v());
@@ -482,7 +483,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
                 reentrantWriteLock.lock();
             preparedStatement.executeUpdate();
             ResultSet resultSet = preparedStatement.getGeneratedKeys();
-            next = resultSet.next();
+            resultSet.next();
             if (resultSet.getRow() > 0) {
                 Object id = resultSet.getObject(1);
                 resultSet.close();
@@ -565,7 +566,7 @@ public class SQLQueries extends ASQLQueries implements AutoCloseable {
     @Override
     public <T extends SQLTableObject> T loadFirstRow(List<Pair<?>> columns, T sqlTableObject, String where, List<Object> whereArgs, Class<T> castClass) throws SqlQueriesException {
         List<T> list = load(columns, sqlTableObject, where, whereArgs, "limit 1");
-        if (list.size() > 0)
+        if (!list.isEmpty())
             return list.get(0);
         return null;
     }

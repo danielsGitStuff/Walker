@@ -2,10 +2,7 @@ package de.mel.sql;
 
 import de.mel.core.serialize.JsonIgnore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * basically represents a row in a database table.
@@ -27,29 +24,31 @@ public abstract class SQLTableObject {
         return allAttributes;
     }
 
-    protected void addToList(List<Pair<?>> list, Pair... pairs) {
-        for (Pair pair : pairs) {
-            list.add(pair);
-        }
+    protected void addToList(List<Pair<?>> list, Pair<?>... pairs) {
+        Collections.addAll(list, pairs);
+    }
+
+    public void onInsert(Long... ids){
+
     }
 
     /**
-     * put everything in here which is not auto filled by the database. afterwards insert the rest with populateAll()
+     * put everything in here which is not autofilled by the database. afterwards insert the rest with populateAll()
      *
      * @param pairs
      */
-    protected void populateInsert(Pair... pairs) {
+    protected void populateInsert(Pair<?>... pairs) {
         if (insertAttributes == null)
             insertAttributes = new ArrayList<>();
         addToList(insertAttributes, pairs);
     }
 
     /**
-     * insert IDs and other stuff that is auto filled by the database. call populateInsert() first
+     * insert IDs and other stuff that is autofilled by the database. call populateInsert() first
      *
      * @param pairs
      */
-    protected void populateAll(Pair... pairs) {
+    protected void populateAll(Pair<?>... pairs) {
         try {
             allAttributes = new ArrayList<>(insertAttributes);
             if (pairs != null && pairs.length > 0)

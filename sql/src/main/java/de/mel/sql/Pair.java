@@ -1,10 +1,6 @@
 package de.mel.sql;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import de.mel.sql.transform.NumberTransformer;
 
 /**
  * this is a simple key value db structure which can cast its value
@@ -15,17 +11,16 @@ import de.mel.sql.transform.NumberTransformer;
  * @author xor
  */
 public class Pair<V> {
-    private static Logger logger = Logger.getLogger(Pair.class);
+    private final static Logger LOGGER = Logger.getLogger(Pair.class);
     private V value;
-    private String key;
+    private final String key;
     private static final String OPEN_BRACE = "{";
     private static final String COMMA = ",";
     private static final String CLOSE_BRACE = "}";
-    private IPairGetListener getListener = null;
-    private IPairGetListener hiddenGetListener = null;
+    private IPairGetListener<V> getListener = null;
+    private IPairGetListener<V> hiddenGetListener = null;
     private IPairSetListener<V> setListener = null;
-
-
+    private Pair<V> referencePair;
 
 
     private static PairTypeConverter typeConverter = new PairTypeConverter();
@@ -35,7 +30,7 @@ public class Pair<V> {
         Pair.typeConverter = typeConverter;
     }
 
-    private Class<V> type;
+    private final Class<V> type;
 
     public Class<V> getGenericClass() {
         return type;
@@ -62,6 +57,9 @@ public class Pair<V> {
         if (hiddenGetListener != null) {
             getListener = hiddenGetListener;
             hiddenGetListener = null;
+        }
+        if (referencePair != null) {
+            return referencePair.v();
         }
         return value;
     }
@@ -95,11 +93,14 @@ public class Pair<V> {
     public String valueAsString() {
         if (value != null) {
             return value.toString();
+        } else if (referencePair != null) {
+            return referencePair.valueAsString();
         }
         return null;
     }
 
     public Pair<V> v(V value) {
+        this.referencePair = null;
         if (setListener != null) {
             this.value = setListener.onSetCalled(value);
             if (hiddenSetListener != null) {
@@ -113,7 +114,8 @@ public class Pair<V> {
     }
 
     public Pair<V> v(Pair<V> pair) {
-        this.value = pair.v();
+        this.referencePair = pair;
+        this.value = null;
         return this;
     }
 
@@ -132,7 +134,7 @@ public class Pair<V> {
             }
         } catch (Exception e) {
             System.err.println("Pair{name:'" + k() + "'}.setValueUnsecure('" + value + "')");
-            logger.error("stacktrace", e);
+            LOGGER.error("stacktrace", e);
         }
     }
 

@@ -143,6 +143,7 @@ class Walker(val config: Config) {
         launch(Dispatchers.IO) {
             rootDir.walkTopDown()
                 .filter { it.isFile }
+                .filter { !(this@Walker.config.whiteList && !whiteList.contains(it.extension.lowercase())) }
                 .asFlow()
                 .flatMapMerge(concurrency = config.threadsMax) { file ->
                     flow {

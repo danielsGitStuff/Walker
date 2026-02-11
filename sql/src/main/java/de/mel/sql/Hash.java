@@ -12,12 +12,40 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Hash {
 
+    private final Integer bufferSize;
+    private byte[] buffer;
+
+
+    public Hash(Integer bufferSize) {
+        this.bufferSize = bufferSize;
+        this.buffer = new byte[bufferSize];
+    }
+
+    public String md5l(InputStream inputStream) {
+        MessageDigest messageDigest;
+        try {
+            messageDigest = MessageDigest.getInstance("MD5");
+            int numRead;
+            do {
+                numRead = inputStream.read(this.buffer);
+                if (numRead > 0) {
+                    messageDigest.update(this.buffer, 0, numRead);
+                }
+            } while (numRead != -1);
+            byte[] bytes = messageDigest.digest();
+            return bytesToString(bytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "exception :(";
+        }
+    }
+
     public static String md5(InputStream inputStream) {
         MessageDigest messageDigest;
         try {
             messageDigest = MessageDigest.getInstance("MD5");
 
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[1024 * 16];
             int numRead;
             do {
                 numRead = inputStream.read(buffer);

@@ -83,10 +83,65 @@ class Walker(val config: Config) {
             String::class.java,
             ASQLQueries.args(walkId)
         )
-        val rootDir: File = File(walkPath)
-        val workers = List(Runtime.getRuntime().availableProcessors()) {
+        val bytesToHash = sql.queryValue(
+            "select sum(size) from ${WalkerFileEntry().tableName} where ${WalkerFileEntry.WALKID} = ? and hash is null",
+            Long::class.java,
+            ASQLQueries.args(walkId)
+        )
+        val totalBytes = bytesToHash ?: 1L
+        val bytesProcessed = java.util.concurrent.atomic.AtomicLong(0)
+        val monitorJob = launch(Dispatchers.Default) {
+            var lastBytes = 0L
+            var lastTime = System.currentTimeMillis()
+
+            while (isActive) {
+                delay(30_000) // Update every 30 seconds
+
+                val currentBytes = bytesProcessed.get()
+                val currentTime = System.currentTimeMillis()
+                val currentFiles = progressCounter.get()
+
+                // Calculate Delta (Windowed Speed)
+                val bytesDelta = currentBytes - lastBytes
+                val timeDelta = currentTime - lastTime
+
+                // Avoid division by zero
+                if (timeDelta > 0) {
+                    val speedBytesPerMs = bytesDelta.toDouble() / timeDelta
+                    val speedMBps = (speedBytesPerMs * 1000) / (1024 * 1024)
+
+                    val percent = (currentBytes.toDouble() / totalBytes) * 100.0
+                    val remainingBytes = totalBytes - currentBytes
+
+                    // Calc ETA
+                    val etaSeconds =
+                        if (speedBytesPerMs > 0) (remainingBytes / (speedBytesPerMs * 1000)).toLong() else 0
+                    val etaString =
+                        String.format("%02d:%02d:%02d", etaSeconds / 3600, (etaSeconds % 3600) / 60, etaSeconds % 60)
+
+                    println(
+                        String.format(
+                            "[Progress] %.2f%% done | Speed: %.2f MB/s | ETA: %s | Total: %.2f GB. Files hashed: %d / %d.",
+                            percent,
+                            speedMBps,
+                            etaString,
+                            currentBytes.toDouble() / (1024.0 * 1024.0 * 1024.0),
+                            currentFiles,
+                            entriesCount
+                        )
+                    )
+                }
+
+                lastBytes = currentBytes
+                lastTime = currentTime
+            }
+        }
+
+
+        val rootDir = File(walkPath)
+        val workers = List(config.threadsMax) {
             launch(Dispatchers.IO) {
-                val hasher: Hash = Hash(1024 * 32)
+                val hasher = Hash(1024 * 32)
                 for (entry in inputChannel) {
                     try {
                         val dir = if (entry.path.isNull) rootDir else File(rootDir, entry.path.v())
@@ -96,9 +151,12 @@ class Walker(val config: Config) {
                         // HEAVY IO
                         val hash = fullPath.inputStream().use { hasher.md5l(it) }
                         entry.hash.v(hash)
-                        if (progressCounter.incrementAndGet() % 10000L == 0L) {
-                            println("${progressCounter.get()}/${entriesCount} hashed.")
-                        }
+                        val fileSize = entry.size.v() ?: 0L
+                        bytesProcessed.addAndGet(fileSize)
+                        progressCounter.incrementAndGet()
+//                        if (progressCounter.incrementAndGet() % 10000L == 0L) {
+//                            println("${progressCounter.get()}/${entriesCount} hashed.")
+//                        }
 
                         updateChannel.send(entry)
                     } catch (e: Exception) {
@@ -122,6 +180,7 @@ class Walker(val config: Config) {
 
         // Cleanup
         workers.joinAll()
+        monitorJob.cancel()
         updateChannel.close()
         writerJob.join()
     }
@@ -168,7 +227,7 @@ class Walker(val config: Config) {
                 .filter { !(this@Walker.config.whiteList && !whiteList.contains(it.extension.lowercase())) }
                 .onEach { }
                 .asFlow()
-                .buffer(Channel.Factory.UNLIMITED)
+                .buffer(Channel.UNLIMITED)
                 .flatMapMerge(concurrency = config.threadsMax) { file ->
                     flow {
                         try {

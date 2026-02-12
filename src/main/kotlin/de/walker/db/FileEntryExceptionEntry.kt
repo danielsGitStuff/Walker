@@ -6,11 +6,11 @@ import de.mel.sql.SQLTableObject
 class FileEntryExceptionEntry : SQLTableObject() {
 
     companion object {
-        val ID = "id"
-        val ID_FILE_ENTRY = "id_file_entry"
-        val CLAZZ = "clazz"
-        val MESSAGE = "message"
-        val STACKTRACE = "stacktrace"
+        const val ID = "id"
+        const val ID_FILE_ENTRY = "id_file_entry"
+        const val CLAZZ = "clazz"
+        const val MESSAGE = "message"
+        const val STACKTRACE = "stacktrace"
     }
 
     init {

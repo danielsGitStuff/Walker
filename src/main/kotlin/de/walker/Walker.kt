@@ -121,11 +121,12 @@ class Walker(val config: Config) {
 
                     println(
                         String.format(
-                            "[Progress] %.2f%% done | Speed: %.2f MB/s | ETA: %s | Total: %.2f GB. Files hashed: %d / %d.",
+                            "[Progress] %.2f%% done | Speed: %.2f MB/s | ETA: %s | Total: %.2f / %.2f GB | Files: %d / %d",
                             percent,
                             speedMBps,
                             etaString,
-                            currentBytes.toDouble() / (1024.0 * 1024.0 * 1024.0),
+                            currentBytes.toDouble() / (1024.0 * 1024.0 * 1024.0), // Current GB
+                            totalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0),   // Total GB (New arg)
                             currentFiles,
                             entriesCount
                         )
